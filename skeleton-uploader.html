@@ -1,0 +1,41 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="skeleton-uploader">
+  <template>
+    <style>
+      :host {
+        display: block;
+      }
+    </style>
+  </template>
+
+  <script>
+    /**
+     * `skeleton-uploader`
+     *
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class SkeletonUploader extends Polymer.Element {
+      /**
+       * @return {string}
+       */
+      static get is() {
+        return 'skeleton-uploader';
+      }
+
+      /**
+       * @return {object}
+       */
+      static get properties() {
+        return {
+          // ..
+        };
+      }
+    }
+
+    window.customElements.define(SkeletonUploader.is, SkeletonUploader);
+  </script>
+</dom-module>
