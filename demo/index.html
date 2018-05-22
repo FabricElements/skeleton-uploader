@@ -10,6 +10,10 @@
 
   <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
   <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../polymerfire/polymerfire.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-if.html">
+  <link rel="import" href="../../skeleton-auth/skeleton-auth.html">
   <link rel="import" href="../skeleton-uploader.html">
 
   <custom-style>
@@ -18,13 +22,36 @@
   </custom-style>
 </head>
 <body>
-<div class="vertical-section-container centered">
-  <h3>Basic skeleton-uploader demo</h3>
-  <demo-snippet>
+  <firebase-app
+    auth-domain="fabricelements.firebaseapp.com"
+    database-url="https://fabricelements.firebaseio.com"
+    api-key="AIzaSyCJRNdR0eodnswyi8MHCtF1YOjY235mhM8"
+    storage-bucket="fabricelements.appspot.com"
+    messagingSenderId="908593247251"
+  ></firebase-app>
+  <dom-bind>
     <template>
-      <skeleton-uploader></skeleton-uploader>
+      <firebase-auth
+        signed-in="{{signedIn}}"
+        user="{{user}}"
+        on-error="handleError">
+      </firebase-auth>
+  
+      <dom-if if="[[!signedIn]]">
+        <template>
+          <skeleton-auth google></skeleton-auth>
+        </template>
+      </dom-if>
     </template>
-  </demo-snippet>
-</div>
+  </dom-bind>
+
+  <div class="vertical-section-container centered">
+    <h3>Basic skeleton-uploader demo</h3>
+    <demo-snippet>
+      <template>
+        <skeleton-uploader path="demo/"></skeleton-uploader>
+      </template>
+    </demo-snippet>
+  </div>
 </body>
 </html>

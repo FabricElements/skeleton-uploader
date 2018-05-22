@@ -2,7 +2,10 @@
   "name": "skeleton-uploader",
   "main": "skeleton-uploader.html",
   "dependencies": {
-    "polymer": "Polymer/polymer#^2.0.0"
+    "polymer": "Polymer/polymer#^2.0.0",
+    "paper-button": "PolymerElements/paper-button#^2.1.1",
+    "polymerfire": "firebase/polymerfire#^2.2.1",
+    "skeleton-auth": "FabricElements/skeleton-auth"
   },
   "devDependencies": {
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",

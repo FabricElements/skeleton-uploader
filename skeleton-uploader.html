@@ -1,4 +1,5 @@
 <link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../paper-button/paper-button.html">
 
 <dom-module id="skeleton-uploader">
   <template>
@@ -6,7 +7,37 @@
       :host {
         display: block;
       }
+
+      #drop-area {
+        border-radius: 1rem;
+        border: 2px solid #ccc;
+        font-family: sans-serif;
+        margin: 1rem 0 1rem 0;
+        padding: 1rem;
+        text-align: center;
+      }
+
+      #drop-area.dragover {
+        border: 1px solid var(--progress-overlay-color);
+        transition: all .3s;
+      }
+
+      paper-button.indigo {
+        background-color: #424242;
+        color: white;
+      }
     </style>
+    <div id="drop-area" class="drop-area" on-tap="capture">
+      Drag and drop zone
+      <input id="media-capture"
+            type="file"
+            accept="[[accept]]"
+            on-change="_upload"
+            hidden
+            capture="[[uploadMethod]]">
+    </div>
+    <progress value="[[uploadProgress]]" max="100" id="uploader">0%</progress>
+    <paper-button class="indigo" on-tap="capture">Upload</paper-button>
   </template>
 
   <script>
@@ -31,8 +62,112 @@
        */
       static get properties() {
         return {
-          // ..
+          path: {
+            type: String,
+            value: null,
+          },
+          exist: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true,
+          },
+          accept: {
+            type: String,
+            value: null,
+          },
+          downloadUrl: {
+            type: String,
+            value: null,
+          },
+          uploadMethod: {
+            type: String,
+            value: '',
+          },
+          uploadProgress: {
+            type: Number,
+            value: 0,
+          },
         };
+      }
+
+       /**
+       * Ready event
+       */
+       connectedCallback() {
+        super.connectedCallback();
+        const dropzone = this.shadowRoot.querySelector('#drop-area');
+
+        dropzone.ondrop = (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+          this._upload(e, e.dataTransfer.files[0]);
+        };
+
+        dropzone.ondragover = function() {
+          return false;
+        };
+
+        dropzone.ondragleave = function() {
+          return false;
+        };
+      }
+
+      /**
+       * Start taking a picture.
+       *
+       */
+       capture() {
+        const input = this.shadowRoot.querySelector('input');
+        input.value = null;
+        input.click();
+      }
+
+      _upload(event, fileObject) {
+        const file = fileObject
+          ? fileObject
+          : this.shadowRoot.querySelector('#media-capture').files[0];
+
+        const storageRef = firebase.storage().ref(this.path + file.name);
+
+        const task = storageRef.put(file)
+
+        task.on('state_changed', (snapshot) => {
+          // Observe state change events such as progress, pause, and resume
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          this.uploadProgress = progress;
+          switch (snapshot.state) {
+            case firebase.storage.TaskState.PAUSED: // or 'paused'
+              this._dispatchEvent('paused', 'Upload is paused');
+              break;
+            case firebase.storage.TaskState.RUNNING: // or 'running'
+              this._dispatchEvent('running', 'Upload is running');
+              break;
+          }
+        }, (error) => {
+          this._dispatchEvent('error', error);
+          // Handle unsuccessful uploads
+        }, () => {
+          // Handle successful uploads on complete
+          // For instance, get the download URL: https://firebasestorage.googleapis.com/...
+          this.downloadUrl = task.snapshot.downloadURL;
+          this._dispatchEvent('completed', downloadUrl);
+          this._pathChanged();
+        });
+      }
+
+      /**
+       * Dispatch event
+       *
+       * @param {string} event
+       * @param  {string} detail
+       * @private
+       */
+      _dispatchEvent(event, detail) {
+        this.dispatchEvent(new CustomEvent(event, {
+          detail: detail,
+          bubbles: true,
+          composed: true,
+        }));
       }
     }
 
