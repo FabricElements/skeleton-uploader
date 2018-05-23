@@ -10,21 +10,68 @@
 
   <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
   <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+  <link rel="import" href="../../polymerfire/polymerfire.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
+  <link rel="import" href="../../polymer/lib/elements/dom-if.html">
+  <link rel="import" href="../../paper-fab/paper-fab.html">
+  <link rel="import" href="../../skeleton-auth/skeleton-auth.html">
   <link rel="import" href="../skeleton-uploader.html">
 
   <custom-style>
     <style is="custom-style" include="demo-pages-shared-styles">
+      #container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
     </style>
   </custom-style>
 </head>
 <body>
-<div class="vertical-section-container centered">
-  <h3>Basic skeleton-uploader demo</h3>
-  <demo-snippet>
+  <firebase-app
+    auth-domain="fabricelements.firebaseapp.com"
+    database-url="https://fabricelements.firebaseio.com"
+    api-key="AIzaSyCJRNdR0eodnswyi8MHCtF1YOjY235mhM8"
+    storage-bucket="fabricelements.appspot.com"
+    messagingSenderId="908593247251"
+  ></firebase-app>
+  <dom-bind>
     <template>
-      <skeleton-uploader></skeleton-uploader>
+      <firebase-auth
+        signed-in="{{signedIn}}"
+        user="{{user}}"
+        on-error="handleError">
+      </firebase-auth>
+  
+      <dom-if if="[[!signedIn]]">
+        <template>
+          <skeleton-auth google></skeleton-auth>
+        </template>
+      </dom-if>
     </template>
-  </demo-snippet>
-</div>
+  </dom-bind>
+
+  <div class="vertical-section-container centered">
+    <h3>Basic skeleton-uploader demo</h3>
+    <demo-snippet>
+      <template>
+        <div id="container">
+          <skeleton-uploader path="demo/demo.jpg"></skeleton-uploader>
+          <paper-fab icon="icons:cloud-upload" onclick="chooseFile()"></paper-fab>
+        </div>
+      </template>
+    </demo-snippet>
+  </div>
+<script>
+  /* eslint-disable no-unused-vars */
+
+  /**
+    * Choose File
+    */
+  function chooseFile() {
+    const element = this.document.querySelector('skeleton-uploader');
+    element.chooseFile();
+  }
+</script>
 </body>
 </html>

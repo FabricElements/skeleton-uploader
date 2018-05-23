@@ -1,12 +1,60 @@
 <link rel="import" href="../polymer/polymer-element.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
 
 <dom-module id="skeleton-uploader">
   <template>
     <style>
       :host {
         display: block;
+        width: 100%;
+        position: relative;
+      }
+
+      #drop-area {
+        border: 1px dashed var(--paper-grey-400);
+        border-radius: 5px;
+        text-align: center;
+        margin-right: 1rem;
+      }
+
+      #drop-area.dragover {
+        border: 1px solid var(--paper-grey-700);
+        transition: all .4s ease-in;
+      }
+
+      #progress-bar {
+        background-color: var(--paper-indigo-500);
+        bottom: 0;
+        left: 0;
+        opacity: 1;
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        transition: all 100ms linear;
+        z-index: 10;
+      }
+
+      #progress-bar.uploaded-true {
+        opacity: 0;
+        transition-duration: 100ms;
+      }
+
+      [hidden] {
+        display: none;
       }
     </style>
+    <input id="media-capture"
+           type="file"
+           accept="[[accept]]"
+           on-change="_upload"
+           hidden
+           size="5242880">
+    <div id="drop-area">
+      <p>[[fileName]]</p>
+      <div id="progress-bar"
+           class$="uploaded-[[uploaded]]"
+           style$="width:[[uploadProgress]]%;"></div>
+    </div>
   </template>
 
   <script>
@@ -31,8 +79,134 @@
        */
       static get properties() {
         return {
-          // ..
+          path: {
+            type: String,
+            value: null,
+          },
+          accept: {
+            type: String,
+            value: null,
+          },
+          downloadUrl: {
+            type: String,
+            value: null,
+          },
+          uploadProgress: {
+            type: Number,
+            value: 0,
+          },
+          fileName: {
+            type: String,
+            value: 'Drop file to upload',
+          },
+          uploaded: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            computed: '_getUploaded(uploadProgress)',
+          },
         };
+      }
+
+       /**
+       * Ready event
+       */
+       connectedCallback() {
+        super.connectedCallback();
+        const dropzone = this.shadowRoot.querySelector('#drop-area');
+
+        dropzone.ondrop = (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('dragover');
+          this._upload(e, e.dataTransfer.files[0]);
+        };
+
+        dropzone.ondragover = function() {
+          dropzone.classList.add('dragover');
+          return false;
+        };
+
+        dropzone.ondragleave = function() {
+          dropzone.classList.remove('dragover');
+          return false;
+        };
+      }
+
+      /**
+       * Choose a file.
+       *
+       */
+      chooseFile() {
+        const input = this.shadowRoot.querySelector('input');
+        input.value = null;
+        input.click();
+      }
+
+      /**
+       * get uploaded
+       *
+       * @param {number} uploadProgress
+       * @return {boolean}
+       * @private
+       */
+      _getUploaded(uploadProgress) {
+        return uploadProgress === 100;
+      }
+
+      /**
+       * Upload
+       *
+       * @param {object} event
+       * @param {object} fileObject
+       * @private
+       */
+      _upload(event, fileObject) {
+        const file = fileObject
+          ? fileObject
+          : this.shadowRoot.querySelector('#media-capture').files[0];
+
+        this.downloadURL = null;
+
+        this.fileName = file.name;
+
+        const storageRef = firebase.storage().ref(this.path);
+
+        const task = storageRef.put(file);
+
+        task.on('state_changed', (snapshot) => {
+          // Observe state change events such as progress, pause, and resume
+          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          this.uploadProgress = progress;
+          switch (snapshot.state) {
+            case firebase.storage.TaskState.PAUSED: // or 'paused'
+              this._dispatchEvent('paused', 'Upload is paused');
+              break;
+            case firebase.storage.TaskState.RUNNING: // or 'running'
+              this._dispatchEvent('running', 'Upload is running');
+              break;
+          }
+        }, (error) => {
+          this._dispatchEvent('error', error);
+          // Handle unsuccessful uploads
+        }, () => {
+          // Handle successful uploads on complete
+          this.downloadURL = task.snapshot.downloadURL;
+        });
+      }
+
+      /**
+       * Dispatch event
+       *
+       * @param {string} event
+       * @param  {string} detail
+       * @private
+       */
+      _dispatchEvent(event, detail) {
+        this.dispatchEvent(new CustomEvent(event, {
+          detail: detail,
+          bubbles: true,
+          composed: true,
+        }));
       }
     }
 
