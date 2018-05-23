@@ -13,11 +13,17 @@
   <link rel="import" href="../../polymerfire/polymerfire.html">
   <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
   <link rel="import" href="../../polymer/lib/elements/dom-if.html">
+  <link rel="import" href="../../paper-fab/paper-fab.html">
   <link rel="import" href="../../skeleton-auth/skeleton-auth.html">
   <link rel="import" href="../skeleton-uploader.html">
 
   <custom-style>
     <style is="custom-style" include="demo-pages-shared-styles">
+      #container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
     </style>
   </custom-style>
 </head>
@@ -49,9 +55,23 @@
     <h3>Basic skeleton-uploader demo</h3>
     <demo-snippet>
       <template>
-        <skeleton-uploader path="demo/"></skeleton-uploader>
+        <div id="container">
+          <skeleton-uploader path="demo/demo.jpg"></skeleton-uploader>
+          <paper-fab icon="icons:cloud-upload" onclick="chooseFile()"></paper-fab>
+        </div>
       </template>
     </demo-snippet>
   </div>
+<script>
+  /* eslint-disable no-unused-vars */
+
+  /**
+    * Choose File
+    */
+  function chooseFile() {
+    const element = this.document.querySelector('skeleton-uploader');
+    element.chooseFile();
+  }
+</script>
 </body>
 </html>

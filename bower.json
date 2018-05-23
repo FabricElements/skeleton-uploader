@@ -5,7 +5,8 @@
     "polymer": "Polymer/polymer#^2.0.0",
     "paper-button": "PolymerElements/paper-button#^2.1.1",
     "polymerfire": "firebase/polymerfire#^2.2.1",
-    "skeleton-auth": "FabricElements/skeleton-auth"
+    "skeleton-auth": "FabricElements/skeleton-auth",
+    "paper-fab": "PolymerElements/paper-fab#^2.1.0"
   },
   "devDependencies": {
     "iron-demo-helpers": "PolymerElements/iron-demo-helpers#^2.0.0",

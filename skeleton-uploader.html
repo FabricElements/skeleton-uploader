@@ -1,43 +1,60 @@
 <link rel="import" href="../polymer/polymer-element.html">
-<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-icons/iron-icons.html">
 
 <dom-module id="skeleton-uploader">
   <template>
     <style>
       :host {
         display: block;
+        width: 100%;
+        position: relative;
       }
 
       #drop-area {
-        border-radius: 1rem;
-        border: 2px solid #ccc;
-        font-family: sans-serif;
-        margin: 1rem 0 1rem 0;
-        padding: 1rem;
+        border: 1px dashed var(--paper-grey-400);
+        border-radius: 5px;
         text-align: center;
+        margin-right: 1rem;
       }
 
       #drop-area.dragover {
-        border: 1px solid var(--progress-overlay-color);
-        transition: all .3s;
+        border: 1px solid var(--paper-grey-700);
+        transition: all .4s ease-in;
       }
 
-      paper-button.indigo {
-        background-color: #424242;
-        color: white;
+      #progress-bar {
+        background-color: var(--paper-indigo-500);
+        bottom: 0;
+        left: 0;
+        opacity: 1;
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        transition: all 100ms linear;
+        z-index: 10;
+      }
+
+      #progress-bar.uploaded-true {
+        opacity: 0;
+        transition-duration: 100ms;
+      }
+
+      [hidden] {
+        display: none;
       }
     </style>
-    <div id="drop-area" class="drop-area" on-tap="capture">
-      Drag and drop zone
-      <input id="media-capture"
-            type="file"
-            accept="[[accept]]"
-            on-change="_upload"
-            hidden
-            capture="[[uploadMethod]]">
+    <input id="media-capture"
+           type="file"
+           accept="[[accept]]"
+           on-change="_upload"
+           hidden
+           size="5242880">
+    <div id="drop-area">
+      <p>[[fileName]]</p>
+      <div id="progress-bar"
+           class$="uploaded-[[uploaded]]"
+           style$="width:[[uploadProgress]]%;"></div>
     </div>
-    <progress value="[[uploadProgress]]" max="100" id="uploader">0%</progress>
-    <paper-button class="indigo" on-tap="capture">Upload</paper-button>
   </template>
 
   <script>
@@ -66,11 +83,6 @@
             type: String,
             value: null,
           },
-          exist: {
-            type: Boolean,
-            value: false,
-            reflectToAttribute: true,
-          },
           accept: {
             type: String,
             value: null,
@@ -79,13 +91,19 @@
             type: String,
             value: null,
           },
-          uploadMethod: {
-            type: String,
-            value: '',
-          },
           uploadProgress: {
             type: Number,
             value: 0,
+          },
+          fileName: {
+            type: String,
+            value: 'Drop file to upload',
+          },
+          uploaded: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            computed: '_getUploaded(uploadProgress)',
           },
         };
       }
@@ -104,32 +122,56 @@
         };
 
         dropzone.ondragover = function() {
+          dropzone.classList.add('dragover');
           return false;
         };
 
         dropzone.ondragleave = function() {
+          dropzone.classList.remove('dragover');
           return false;
         };
       }
 
       /**
-       * Start taking a picture.
+       * Choose a file.
        *
        */
-       capture() {
+      chooseFile() {
         const input = this.shadowRoot.querySelector('input');
         input.value = null;
         input.click();
       }
 
+      /**
+       * get uploaded
+       *
+       * @param {number} uploadProgress
+       * @return {boolean}
+       * @private
+       */
+      _getUploaded(uploadProgress) {
+        return uploadProgress === 100;
+      }
+
+      /**
+       * Upload
+       *
+       * @param {object} event
+       * @param {object} fileObject
+       * @private
+       */
       _upload(event, fileObject) {
         const file = fileObject
           ? fileObject
           : this.shadowRoot.querySelector('#media-capture').files[0];
 
-        const storageRef = firebase.storage().ref(this.path + file.name);
+        this.downloadURL = null;
 
-        const task = storageRef.put(file)
+        this.fileName = file.name;
+
+        const storageRef = firebase.storage().ref(this.path);
+
+        const task = storageRef.put(file);
 
         task.on('state_changed', (snapshot) => {
           // Observe state change events such as progress, pause, and resume
@@ -148,10 +190,7 @@
           // Handle unsuccessful uploads
         }, () => {
           // Handle successful uploads on complete
-          // For instance, get the download URL: https://firebasestorage.googleapis.com/...
-          this.downloadUrl = task.snapshot.downloadURL;
-          this._dispatchEvent('completed', downloadUrl);
-          this._pathChanged();
+          this.downloadURL = task.snapshot.downloadURL;
         });
       }
 
