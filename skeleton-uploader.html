@@ -16,6 +16,7 @@
         border-radius: 5px;
         text-align: center;
         margin-right: 1rem;
+        cursor: pointer;
       }
 
       #drop-area.dragover {
@@ -50,8 +51,8 @@
            on-change="_upload"
            hidden
            size="5242880">
-    <div id="drop-area">
-      <p>[[fileName]]</p>
+    <div id="drop-area" on-click="chooseFile">
+      <p>[[titlePreview]]</p>
       <div id="progress-bar"
            class$="uploaded-[[uploaded]]"
            style$="width:[[uploadProgress]]%;"></div>
@@ -96,7 +97,7 @@
             type: Number,
             value: 0,
           },
-          fileName: {
+          titlePreview: {
             type: String,
             value: 'Drop file to upload',
           },
@@ -106,6 +107,10 @@
             notify: true,
             computed: '_getUploaded(uploadProgress)',
           },
+          metadata: {
+            type: Object,
+            value: {},
+          }
         };
       }
 
@@ -168,11 +173,13 @@
 
         this.downloadURL = null;
 
-        this.fileName = file.name;
+        this.titlePreview = file.name;
 
-        const storageRef = firebase.storage().ref(this.path);
+        var fileExt = /\.[\w]+/.exec(file.name);
 
-        const task = storageRef.put(file);
+        const storageRef = firebase.storage().ref(this.path + fileExt);
+
+        const task = storageRef.put(file, this.metadata);
 
         task.on('state_changed', (snapshot) => {
           // Observe state change events such as progress, pause, and resume
