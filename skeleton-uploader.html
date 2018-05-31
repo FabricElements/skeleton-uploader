@@ -1,22 +1,23 @@
 <link rel="import" href="../polymer/polymer-element.html">
 <link rel="import" href="../iron-icons/iron-icons.html">
 <link rel="import" href="../polymerfire/firebase-storage-script.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
 
 <dom-module id="skeleton-uploader">
   <template>
     <style>
       :host {
         display: block;
-        width: 100%;
+        width: auto;
         position: relative;
       }
 
       #drop-area {
-        border: 1px dashed var(--paper-grey-400);
         border-radius: 5px;
         text-align: center;
-        margin-right: 1rem;
         cursor: pointer;
+        display: flex;
       }
 
       #drop-area.dragover {
@@ -25,24 +26,58 @@
       }
 
       #progress-bar {
-        background-color: var(--paper-indigo-500);
+        background-color: var(--paper-green-500);
+        border-radius: 5px;
         bottom: 0;
         left: 0;
         opacity: 1;
         pointer-events: none;
         position: absolute;
         top: 0;
-        transition: all 100ms linear;
+        transition: all 500ms linear;
         z-index: 10;
       }
 
       #progress-bar.uploaded-true {
         opacity: 0;
-        transition-duration: 100ms;
+        transition-duration: 500ms;
       }
 
       [hidden] {
         display: none;
+      }
+
+      paper-button {
+        color: white;
+        transition: transform 500ms linear;
+      }
+
+      .uploaderButton:active{
+        transform: scale(0.9);
+      }
+
+      paper-button iron-icon {
+        margin-right: 10px;
+      }
+
+      paper-button.default {
+        background-color: var(--paper-blue-500);
+      }
+
+      paper-button.uploading {
+        background-color: var(--paper-grey-500);
+      }
+
+      paper-button.done {
+        background-color: var(--paper-green-500);
+      }
+
+      paper-button.failed {
+        background-color: var(--paper-red-500);
+      }
+
+      paper-icon-button {
+        color: var(--paper-red-500);
       }
     </style>
     <input id="media-capture"
@@ -50,12 +85,18 @@
            accept="[[accept]]"
            on-change="_upload"
            hidden
-           size="5242880">
+           size="5242880"
+           disabled$="[[isUploadDisabled]]">
     <div id="drop-area" on-click="chooseFile">
-      <p>[[titlePreview]]</p>
-      <div id="progress-bar"
-           class$="uploaded-[[uploaded]]"
-           style$="width:[[uploadProgress]]%;"></div>
+      <!--<p>[[titlePreview]]</p>-->
+      <paper-button class$="[[buttonState]] uploaderButton" on-tap="_tapButton">
+        <div id="progress-bar"
+             class$="uploaded-[[uploaded]]"
+             style$="width:[[uploadProgress]]%;"></div>
+        <iron-icon icon="[[buttonIcon]]"></iron-icon>
+        [[buttonText]]
+      </paper-button>
+      <paper-icon-button icon="cancel" hidden$="[[!showCancel]]" on-tap="_resetButton"></paper-icon-button>
     </div>
   </template>
 
@@ -110,14 +151,79 @@
           metadata: {
             type: Object,
             value: {},
-          }
+          },
+          buttonState: {
+            type: String,
+            value: 'default',
+            observer: '_stateObserver',
+          },
+          buttonText: {
+            type: String,
+            value: 'Upload',
+          },
+          buttonIcon: {
+            type: String,
+            value: 'cloud-upload',
+          },
+          showCancel: {
+            type: Boolean,
+            value: false,
+          },
+          isUploadDisabled: {
+            type: Boolean,
+            value: false,
+          },
         };
       }
 
-       /**
+      _stateObserver(state) {
+        if (!state) return;
+        this.showCancel = false;
+        this.isUploadDisabled = false;
+        if (state === 'default') {
+          this.buttonText = 'Upload';
+          this.buttonIcon = 'cloud-upload';
+        }
+        if (state === 'uploading') {
+          this.buttonText = 'Uploading';
+          this.buttonIcon = 'refresh';
+          this.showCancel = true;
+          this.isUploadDisabled = true;
+        }
+        if (state === 'done') {
+          this.buttonText = 'Done';
+          this.buttonIcon = 'cloud-done';
+          this.isUploadDisabled = true;
+          setTimeout(() => {
+            this._resetButton();
+          }, 3000);
+        }
+        if (state === 'failed') {
+          this.buttonText = 'Failed';
+          this.buttonIcon = 'clear';
+          this.isUploadDisabled = true;
+          setTimeout(() => {
+            this._resetButton();
+          }, 5000);
+        }
+      }
+
+      _tapButton() {
+        if (this.buttonState === 'done' || this.buttonState === 'failed') {
+          this._resetButton();
+        }
+      }
+
+      _resetButton() {
+        console.log('_resetButton');
+        this.isUploadDisabled = true;
+        this.buttonState = 'default';
+      }
+
+      /**
        * Ready event
        */
-       connectedCallback() {
+      connectedCallback() {
         super.connectedCallback();
         const dropzone = this.shadowRoot.querySelector('#drop-area');
 
@@ -143,9 +249,12 @@
        *
        */
       chooseFile() {
-        const input = this.shadowRoot.querySelector('input');
-        input.value = null;
-        input.click();
+        console.log('chooseFile', this.buttonState);
+        if (this.buttonState != 'uploading') {
+          const input = this.shadowRoot.querySelector('input');
+          input.value = null;
+          input.click();
+        }
       }
 
       /**
@@ -175,7 +284,7 @@
 
         this.titlePreview = file.name;
 
-        var fileExt = /\.[\w]+/.exec(file.name);
+        let fileExt = /\.[\w]+/.exec(file.name);
 
         const storageRef = firebase.storage().ref(this.path + fileExt);
 
@@ -185,6 +294,7 @@
           // Observe state change events such as progress, pause, and resume
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           this.uploadProgress = progress;
+          this.buttonState = 'uploading';
           switch (snapshot.state) {
             case firebase.storage.TaskState.PAUSED: // or 'paused'
               this._dispatchEvent('paused', 'Upload is paused');
@@ -194,11 +304,13 @@
               break;
           }
         }, (error) => {
-          this._dispatchEvent('error', error);
           // Handle unsuccessful uploads
+          this.buttonState = 'failed';
+          this._dispatchEvent('error', error);
         }, () => {
           // Handle successful uploads on complete
           this.downloadURL = task.snapshot.downloadURL;
+          this.buttonState = 'done';
         });
       }
 

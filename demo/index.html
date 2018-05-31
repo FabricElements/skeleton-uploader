@@ -13,7 +13,6 @@
   <link rel="import" href="../../polymerfire/polymerfire.html">
   <link rel="import" href="../../polymer/lib/elements/dom-bind.html">
   <link rel="import" href="../../polymer/lib/elements/dom-if.html">
-  <link rel="import" href="../../paper-fab/paper-fab.html">
   <link rel="import" href="../../skeleton-auth/skeleton-auth.html">
   <link rel="import" href="../skeleton-uploader.html">
 
@@ -42,7 +41,7 @@
         user="{{user}}"
         on-error="handleError">
       </firebase-auth>
-  
+
       <dom-if if="[[!signedIn]]">
         <template>
           <skeleton-auth google></skeleton-auth>
@@ -57,7 +56,6 @@
       <template>
         <div id="container">
           <skeleton-uploader path="demo_upload/demo"></skeleton-uploader>
-          <paper-fab icon="icons:cloud-upload" onclick="chooseFile()"></paper-fab>
         </div>
       </template>
     </demo-snippet>
