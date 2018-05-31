@@ -49,6 +49,11 @@
 
       paper-button {
         color: white;
+        transition: transform 500ms linear;
+      }
+
+      .uploaderButton:active{
+        transform: scale(0.9);
       }
 
       paper-button iron-icon {
@@ -62,12 +67,15 @@
       paper-button.uploading {
         background-color: var(--paper-grey-500);
       }
+
       paper-button.done {
         background-color: var(--paper-green-500);
       }
+
       paper-button.failed {
         background-color: var(--paper-red-500);
       }
+
       paper-icon-button {
         color: var(--paper-red-500);
       }
@@ -78,17 +86,17 @@
            on-change="_upload"
            hidden
            size="5242880"
-           disabled$="[[isUploading]]">
+           disabled$="[[isUploadDisabled]]">
     <div id="drop-area" on-click="chooseFile">
       <!--<p>[[titlePreview]]</p>-->
-      <paper-button class$="[[buttonState]]">
+      <paper-button class$="[[buttonState]] uploaderButton" on-tap="_tapButton">
         <div id="progress-bar"
              class$="uploaded-[[uploaded]]"
              style$="width:[[uploadProgress]]%;"></div>
         <iron-icon icon="[[buttonIcon]]"></iron-icon>
         [[buttonText]]
       </paper-button>
-      <paper-icon-button icon="cancel" hidden$="[[!showCancel]]"></paper-icon-button>
+      <paper-icon-button icon="cancel" hidden$="[[!showCancel]]" on-tap="_resetButton"></paper-icon-button>
     </div>
   </template>
 
@@ -161,7 +169,7 @@
             type: Boolean,
             value: false,
           },
-          isUploading: {
+          isUploadDisabled: {
             type: Boolean,
             value: false,
           },
@@ -171,7 +179,7 @@
       _stateObserver(state) {
         if (!state) return;
         this.showCancel = false;
-        this.isUploading = false;
+        this.isUploadDisabled = false;
         if (state === 'default') {
           this.buttonText = 'Upload';
           this.buttonIcon = 'cloud-upload';
@@ -180,16 +188,36 @@
           this.buttonText = 'Uploading';
           this.buttonIcon = 'refresh';
           this.showCancel = true;
-          this.isUploading = true;
+          this.isUploadDisabled = true;
         }
         if (state === 'done') {
           this.buttonText = 'Done';
           this.buttonIcon = 'cloud-done';
+          this.isUploadDisabled = true;
+          setTimeout(() => {
+            this._resetButton();
+          }, 3000);
         }
         if (state === 'failed') {
           this.buttonText = 'Failed';
           this.buttonIcon = 'clear';
+          this.isUploadDisabled = true;
+          setTimeout(() => {
+            this._resetButton();
+          }, 5000);
         }
+      }
+
+      _tapButton() {
+        if (this.buttonState === 'done' || this.buttonState === 'failed') {
+          this._resetButton();
+        }
+      }
+
+      _resetButton() {
+        console.log('_resetButton');
+        this.isUploadDisabled = true;
+        this.buttonState = 'default';
       }
 
       /**
@@ -221,9 +249,12 @@
        *
        */
       chooseFile() {
-        const input = this.shadowRoot.querySelector('input');
-        input.value = null;
-        input.click();
+        console.log('chooseFile', this.buttonState);
+        if (this.buttonState != 'uploading') {
+          const input = this.shadowRoot.querySelector('input');
+          input.value = null;
+          input.click();
+        }
       }
 
       /**
