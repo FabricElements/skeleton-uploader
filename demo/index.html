@@ -42,7 +42,7 @@
         user="{{user}}"
         on-error="handleError">
       </firebase-auth>
-  
+
       <dom-if if="[[!signedIn]]">
         <template>
           <skeleton-auth google></skeleton-auth>
@@ -57,7 +57,7 @@
       <template>
         <div id="container">
           <skeleton-uploader path="demo_upload/demo"></skeleton-uploader>
-          <paper-fab icon="icons:cloud-upload" onclick="chooseFile()"></paper-fab>
+          <!--<paper-fab icon="icons:cloud-upload" onclick="chooseFile()"></paper-fab>-->
         </div>
       </template>
     </demo-snippet>
