@@ -52,7 +52,7 @@
         transition: transform 500ms linear;
       }
 
-      .uploaderButton:active{
+      .uploaderButton:active {
         transform: scale(0.9);
       }
 
@@ -176,50 +176,6 @@
         };
       }
 
-      _stateObserver(state) {
-        if (!state) return;
-        this.showCancel = false;
-        this.isUploadDisabled = false;
-        if (state === 'default') {
-          this.buttonText = 'Upload';
-          this.buttonIcon = 'cloud-upload';
-        }
-        if (state === 'uploading') {
-          this.buttonText = 'Uploading';
-          this.buttonIcon = 'refresh';
-          this.showCancel = true;
-          this.isUploadDisabled = true;
-        }
-        if (state === 'done') {
-          this.buttonText = 'Done';
-          this.buttonIcon = 'cloud-done';
-          this.isUploadDisabled = true;
-          setTimeout(() => {
-            this._resetButton();
-          }, 3000);
-        }
-        if (state === 'failed') {
-          this.buttonText = 'Failed';
-          this.buttonIcon = 'clear';
-          this.isUploadDisabled = true;
-          setTimeout(() => {
-            this._resetButton();
-          }, 5000);
-        }
-      }
-
-      _tapButton() {
-        if (this.buttonState === 'done' || this.buttonState === 'failed') {
-          this._resetButton();
-        }
-      }
-
-      _resetButton() {
-        console.log('_resetButton');
-        this.isUploadDisabled = true;
-        this.buttonState = 'default';
-      }
-
       /**
        * Ready event
        */
@@ -288,7 +244,17 @@
 
         const storageRef = firebase.storage().ref(this.path + fileExt);
 
-        const task = storageRef.put(file, this.metadata);
+        let metadataObject = null;
+        if (this.metadata && typeof this.metadata === 'object') {
+          metadataObject = {
+            customMetadata: this.metadata,
+          };
+        } else if (this.metadata && typeof this.metadata !== 'object') {
+          this.buttonState = 'failed';
+          this._dispatchEvent('error', 'Metadata should be an object');
+          return;
+        }
+        const task = storageRef.put(file, metadataObject);
 
         task.on('state_changed', (snapshot) => {
           // Observe state change events such as progress, pause, and resume
@@ -327,6 +293,63 @@
           bubbles: true,
           composed: true,
         }));
+      }
+
+      /**
+       * State observer
+       * @param {string} state
+       * @private
+       */
+      _stateObserver(state) {
+        if (!state) return;
+        this.showCancel = false;
+        this.isUploadDisabled = false;
+        if (state === 'default') {
+          this.buttonText = 'Upload';
+          this.buttonIcon = 'cloud-upload';
+        }
+        if (state === 'uploading') {
+          this.buttonText = 'Uploading';
+          this.buttonIcon = 'refresh';
+          this.showCancel = true;
+          this.isUploadDisabled = true;
+        }
+        if (state === 'done') {
+          this.buttonText = 'Done';
+          this.buttonIcon = 'cloud-done';
+          this.isUploadDisabled = true;
+          setTimeout(() => {
+            this._resetButton();
+          }, 3000);
+        }
+        if (state === 'failed') {
+          this.buttonText = 'Failed';
+          this.buttonIcon = 'clear';
+          this.isUploadDisabled = true;
+          setTimeout(() => {
+            this._resetButton();
+          }, 5000);
+        }
+      }
+
+      /**
+       * Tap button
+       * @private
+       */
+      _tapButton() {
+        if (this.buttonState === 'done' || this.buttonState === 'failed') {
+          this._resetButton();
+        }
+      }
+
+      /**
+       * Reset button
+       * @private
+       */
+      _resetButton() {
+        console.log('_resetButton');
+        this.isUploadDisabled = true;
+        this.buttonState = 'default';
       }
     }
 
