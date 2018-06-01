@@ -13,16 +13,14 @@
         position: relative;
       }
 
+      .container {
+        display: flex;
+      }
+
       #drop-area {
         border-radius: 5px;
         text-align: center;
         cursor: pointer;
-        display: flex;
-      }
-
-      #drop-area.dragover {
-        border: 1px solid var(--paper-grey-700);
-        transition: all .4s ease-in;
       }
 
       #progress-bar {
@@ -87,15 +85,17 @@
            hidden
            size="5242880"
            disabled$="[[isUploadDisabled]]">
-    <div id="drop-area" on-click="chooseFile">
-      <!--<p>[[titlePreview]]</p>-->
-      <paper-button class$="[[buttonState]] uploaderButton" on-tap="_tapButton">
-        <div id="progress-bar"
-             class$="uploaded-[[uploaded]]"
-             style$="width:[[uploadProgress]]%;"></div>
-        <iron-icon icon="[[buttonIcon]]"></iron-icon>
-        [[buttonText]]
-      </paper-button>
+    <div class="container">
+      <div id="drop-area" on-click="chooseFile">
+        <!--<p>[[titlePreview]]</p>-->
+        <paper-button class$="[[buttonState]] uploaderButton" on-tap="_tapButton">
+          <div id="progress-bar"
+               class$="uploaded-[[uploaded]]"
+               style$="width:[[uploadProgress]]%;"></div>
+          <iron-icon icon="[[buttonIcon]]"></iron-icon>
+          [[buttonText]]
+        </paper-button>
+      </div>
       <paper-icon-button icon="cancel" hidden$="[[!showCancel]]" on-tap="_resetButton"></paper-icon-button>
     </div>
   </template>
@@ -186,7 +186,9 @@
         dropzone.ondrop = (e) => {
           e.preventDefault();
           dropzone.classList.remove('dragover');
-          this._upload(e, e.dataTransfer.files[0]);
+          if (!this.uploadProgress) {
+            this._upload(e, e.dataTransfer.files[0]);
+          }
         };
 
         dropzone.ondragover = function() {
@@ -254,9 +256,9 @@
           this._dispatchEvent('error', 'Metadata should be an object');
           return;
         }
-        const task = storageRef.put(file, metadataObject);
+        this.task = storageRef.put(file, metadataObject);
 
-        task.on('state_changed', (snapshot) => {
+        this.task.on('state_changed', (snapshot) => {
           // Observe state change events such as progress, pause, and resume
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
           this.uploadProgress = progress;
@@ -275,7 +277,7 @@
           this._dispatchEvent('error', error);
         }, () => {
           // Handle successful uploads on complete
-          this.downloadURL = task.snapshot.downloadURL;
+          this.downloadURL = this.task.snapshot.downloadURL;
           this.buttonState = 'done';
         });
       }
@@ -348,8 +350,9 @@
        */
       _resetButton() {
         console.log('_resetButton');
-        this.isUploadDisabled = true;
+        this.uploadProgress = 0;
         this.buttonState = 'default';
+        if (this.task) this.task.cancel();
       }
     }
 
