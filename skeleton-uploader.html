@@ -13,10 +13,6 @@
         position: relative;
       }
 
-      .container {
-        display: flex;
-      }
-
       #drop-area {
         border-radius: 5px;
         text-align: center;
@@ -25,7 +21,6 @@
 
       #progress-bar {
         background-color: var(--paper-green-500);
-        border-radius: 5px;
         bottom: 0;
         left: 0;
         opacity: 1;
@@ -77,6 +72,10 @@
       paper-icon-button {
         color: var(--paper-red-500);
       }
+
+      paper-button[disabled] {
+        background-color: var(--paper-grey-400);
+      }
     </style>
     <input id="media-capture"
            type="file"
@@ -85,19 +84,18 @@
            hidden
            size="5242880"
            disabled$="[[isUploadDisabled]]">
-    <div class="container">
-      <div id="drop-area" on-click="chooseFile">
-        <!--<p>[[titlePreview]]</p>-->
-        <paper-button class$="[[buttonState]] uploaderButton" on-tap="_tapButton">
-          <div id="progress-bar"
-               class$="uploaded-[[uploaded]]"
-               style$="width:[[uploadProgress]]%;"></div>
-          <iron-icon icon="[[buttonIcon]]"></iron-icon>
-          [[buttonText]]
-        </paper-button>
-      </div>
+      <paper-button class$="[[buttonState]] uploaderButton"
+                    disabled$="[[disabled]]"
+                    on-tap="_tapButton">
+        <div id="drop-area" on-click="chooseFile">
+            <div id="progress-bar"
+                class$="uploaded-[[uploaded]]"
+                style$="width:[[uploadProgress]]%;"></div>
+            <iron-icon icon="[[buttonIcon]]"></iron-icon>
+            [[buttonText]]
+        </div>
+      </paper-button>
       <paper-icon-button icon="cancel" hidden$="[[!showCancel]]" on-tap="_resetButton"></paper-icon-button>
-    </div>
   </template>
 
   <script>
@@ -173,6 +171,10 @@
             type: Boolean,
             value: false,
           },
+          disabled: {
+            type: Boolean,
+            value: false,
+          },
         };
       }
 
@@ -207,7 +209,6 @@
        *
        */
       chooseFile() {
-        console.log('chooseFile', this.buttonState);
         if (this.buttonState != 'uploading') {
           const input = this.shadowRoot.querySelector('input');
           input.value = null;
@@ -272,8 +273,11 @@
               break;
           }
         }, (error) => {
+          error.code === 'storage/canceled'
+            ? this.buttonState = 'default'
+            : this.buttonState = 'failed';
+
           // Handle unsuccessful uploads
-          this.buttonState = 'failed';
           this._dispatchEvent('error', error);
         }, () => {
           // Handle successful uploads on complete
@@ -349,7 +353,6 @@
        * @private
        */
       _resetButton() {
-        console.log('_resetButton');
         this.uploadProgress = 0;
         this.buttonState = 'default';
         if (this.task) this.task.cancel();
