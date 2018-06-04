@@ -34,29 +34,27 @@
     storage-bucket="fabricelements.appspot.com"
     messagingSenderId="908593247251"
   ></firebase-app>
-  <dom-bind>
-    <template>
-      <firebase-auth
-        signed-in="{{signedIn}}"
-        user="{{user}}"
-        on-error="handleError">
-      </firebase-auth>
-
-      <dom-if if="[[!signedIn]]">
-        <template>
-          <skeleton-auth google></skeleton-auth>
-        </template>
-      </dom-if>
-    </template>
-  </dom-bind>
 
   <div class="vertical-section-container centered">
     <h3>Basic skeleton-uploader demo</h3>
     <demo-snippet>
       <template>
-        <div id="container">
-          <skeleton-uploader path="demo_upload/demo"></skeleton-uploader>
-        </div>
+        <dom-bind>
+          <template>
+            <firebase-auth
+              signed-in="{{signedIn}}"
+              user="{{user}}"
+              on-error="handleError">
+            </firebase-auth>
+
+            <dom-if if="[[!signedIn]]">
+              <template>
+                <skeleton-auth google></skeleton-auth>
+              </template>
+            </dom-if>
+            <skeleton-uploader disabled="[[!signedIn]]" path="demo_upload/demo"></skeleton-uploader>
+          </template>
+        </dom-bind>
       </template>
     </demo-snippet>
   </div>
