@@ -8,13 +8,13 @@
   <template>
     <style>
       :host {
+        --item-border-radius: 2px;
         display: block;
         width: auto;
         position: relative;
       }
 
       #drop-area {
-        border-radius: 5px;
         text-align: center;
         cursor: pointer;
       }
@@ -41,6 +41,7 @@
       }
 
       paper-button {
+        border-radius: var(--item-border-radius);
         color: white;
         transition: transform 500ms linear;
       }
