@@ -7,7 +7,7 @@
 Install skeleton-uploader with npm
 
 ```shell
-$ npm install FabricElements/skeleton-carousel --save
+$ npm install FabricElements/skeleton-uploader --save
 ```
 
 ## Usage
