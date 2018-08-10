@@ -100,7 +100,7 @@ class SkeletonUploader extends PolymerElement {
                     uploaderButton"
                     disabled$="[[disabled]]"
                     on-tap="_tapButton">
-        <div id="drop-area" on-click="chooseFile">
+        <div id="drop-area">
             <div id="progress-bar"
                  class$="uploaded-[[uploaded]]"
                  style$="width:[[uploadProgress]]%;"></div>
@@ -209,7 +209,7 @@ class SkeletonUploader extends PolymerElement {
    *
    */
   chooseFile() {
-    if (this.buttonState != 'uploading') {
+    if (this.buttonState !== 'uploading') {
       const input = this.shadowRoot.querySelector('input');
       input.value = null;
       input.click();
@@ -344,6 +344,7 @@ class SkeletonUploader extends PolymerElement {
     if (this.buttonState === 'done' || this.buttonState === 'failed') {
       this._resetButton();
     }
+    this.chooseFile();
   }
 
   /**
