@@ -115,7 +115,6 @@
       static get is() {
         return 'skeleton-uploader';
       }
-
       /**
        * @return {object}
        */
@@ -176,16 +175,22 @@
             type: Boolean,
             value: false,
           },
+          maxSize: {
+            type: Number,
+            value: 0,
+          },
+          minSize: {
+            type: Number,
+            value: 0,
+          },
         };
       }
-
       /**
        * Ready event
        */
       connectedCallback() {
         super.connectedCallback();
         const dropzone = this.shadowRoot.querySelector('#drop-area');
-
         dropzone.ondrop = (e) => {
           e.preventDefault();
           dropzone.classList.remove('dragover');
@@ -193,18 +198,15 @@
             this._upload(e, e.dataTransfer.files[0]);
           }
         };
-
         dropzone.ondragover = function() {
           dropzone.classList.add('dragover');
           return false;
         };
-
         dropzone.ondragleave = function() {
           dropzone.classList.remove('dragover');
           return false;
         };
       }
-
       /**
        * Choose a file.
        *
@@ -216,7 +218,6 @@
           input.click();
         }
       }
-
       /**
        * get uploaded
        *
@@ -227,7 +228,6 @@
       _getUploaded(uploadProgress) {
         return uploadProgress === 100;
       }
-
       /**
        * Upload
        *
@@ -236,18 +236,24 @@
        * @private
        */
       _upload(event, fileObject) {
-        const file = fileObject
-          ? fileObject
-          : this.shadowRoot.querySelector('#media-capture').files[0];
-
+        const file = fileObject ?
+          fileObject :
+          this.shadowRoot.querySelector('#media-capture').files[0];
+        const fileSize = this.shadowRoot.querySelector('#media-capture').files[0].size;
+        if (this.maxSize != 0 && fileSize > this.maxSize) {
+          this.buttonState = 'failed';
+          this._dispatchEvent('error', 'File size is bigger than specified');
+          return;
+        }
+        if (this.minSize != 0 && fileSize < this.minSize) {
+          this.buttonState = 'failed';
+          this._dispatchEvent('error', 'File size is smaller than specified');
+          return;
+        }
         this.downloadURL = null;
-
         this.titlePreview = file.name;
-
         let fileExt = /\.[\w]+/.exec(file.name);
-
         const storageRef = firebase.storage().ref(this.path + fileExt);
-
         let metadataObject = null;
         if (this.metadata && typeof this.metadata === 'object') {
           metadataObject = {
@@ -259,7 +265,6 @@
           return;
         }
         this.task = storageRef.put(file, metadataObject);
-
         this.task.on('state_changed', (snapshot) => {
           // Observe state change events such as progress, pause, and resume
           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -274,10 +279,9 @@
               break;
           }
         }, (error) => {
-          error.code === 'storage/canceled'
-            ? this.buttonState = 'default'
-            : this.buttonState = 'failed';
-
+          error.code === 'storage/canceled' ?
+            this.buttonState = 'default' :
+            this.buttonState = 'failed';
           // Handle unsuccessful uploads
           this._dispatchEvent('error', error);
         }, () => {
@@ -285,12 +289,11 @@
           this.downloadURL = this.task.snapshot.downloadURL;
           this._dispatchEvent('completed', {
             type: file.type,
-            url: this.downloadURL
+            url: this.downloadURL,
           });
           this.buttonState = 'done';
         });
       }
-
       /**
        * Dispatch event
        *
@@ -305,7 +308,6 @@
           composed: true,
         }));
       }
-
       /**
        * State observer
        * @param {string} state
@@ -342,7 +344,6 @@
           }, 5000);
         }
       }
-
       /**
        * Tap button
        * @private
@@ -353,7 +354,6 @@
         }
         this.chooseFile();
       }
-
       /**
        * Reset button
        * @private
@@ -364,7 +364,7 @@
         if (this.task) this.task.cancel();
       }
     }
-
     window.customElements.define(SkeletonUploader.is, SkeletonUploader);
+
   </script>
 </dom-module>
