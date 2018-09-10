@@ -128,6 +128,10 @@ class SkeletonUploader extends PolymerElement {
         type: String,
         value: null,
       },
+      extension: {
+        type: String,
+        value: null,
+      },
       accept: {
         type: String,
         value: null,
@@ -280,12 +284,26 @@ class SkeletonUploader extends PolymerElement {
     }, () => {
       // Handle successful uploads on complete
       this.downloadURL = this.task.snapshot.downloadURL;
+      this.extension = fileExt[0];
       this._dispatchEvent('completed', {
         type: file.type,
-        url: this.downloadURL
+        url: this.downloadURL,
       });
       this.buttonState = 'done';
     });
+  }
+
+  /**
+   * Remove file from storage
+   *
+   * @return {*}
+   */
+  removeFile() {
+    const pathRef = firebase.storage().ref().child(this.path + this.extension);
+      // Get the download URL
+    return pathRef.delete()
+      .then(() => this.src = null)
+      .catch((error) => this.error = error);
   }
 
   /**
