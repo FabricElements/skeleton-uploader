@@ -282,14 +282,16 @@ class SkeletonUploader extends PolymerElement {
       // Handle unsuccessful uploads
       this._dispatchEvent('error', error);
     }, () => {
-      // Handle successful uploads on complete
-      this.downloadURL = this.task.snapshot.downloadURL;
-      this.extension = fileExt[0];
-      this._dispatchEvent('completed', {
-        type: file.type,
-        url: this.downloadURL,
+      this.task.snapshot.ref.getDownloadURL().then((downloadURL) => {
+        // Handle successful uploads on complete
+        this.downloadURL = downloadURL;
+        this.extension = fileExt[0];
+        this._dispatchEvent('completed', {
+          type: file.type,
+          url: this.downloadURL,
+        });
+        this.buttonState = 'done';
       });
-      this.buttonState = 'done';
     });
   }
 
