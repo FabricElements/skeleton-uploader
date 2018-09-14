@@ -144,6 +144,10 @@ class SkeletonUploader extends PolymerElement {
         type: Number,
         value: 0,
       },
+      titlePreview: {
+        type: String,
+        value: 'Drop file to upload',
+      },
       uploaded: {
         type: Boolean,
         value: false,
@@ -178,6 +182,14 @@ class SkeletonUploader extends PolymerElement {
       disabled: {
         type: Boolean,
         value: false,
+      },
+      maxSize: {
+        type: Number,
+        value: 0,
+      },
+      minSize: {
+        type: Number,
+        value: 0,
       },
     };
   }
@@ -239,16 +251,24 @@ class SkeletonUploader extends PolymerElement {
    * @private
    */
   _upload(event, fileObject) {
-    const file = fileObject
-      ? fileObject
-      : this.shadowRoot.querySelector('#media-capture').files[0];
-
+    const file = fileObject ?
+      fileObject :
+      this.shadowRoot.querySelector('#media-capture').files[0];
+    const fileSize = this.shadowRoot.querySelector('#media-capture').files[0].size;
+    if (this.maxSize != 0 && fileSize > this.maxSize) {
+      this.buttonState = 'failed';
+      this._dispatchEvent('error', 'File size is bigger than specified');
+      return;
+    }
+    if (this.minSize != 0 && fileSize < this.minSize) {
+      this.buttonState = 'failed';
+      this._dispatchEvent('error', 'File size is smaller than specified');
+      return;
+    }
     this.downloadURL = null;
-
+    this.titlePreview = file.name;
     let fileExt = /\.[\w]+/.exec(file.name);
-
     const storageRef = firebase.storage().ref(this.path + fileExt);
-
     let metadataObject = null;
     if (this.metadata && typeof this.metadata === 'object') {
       metadataObject = {
@@ -260,7 +280,6 @@ class SkeletonUploader extends PolymerElement {
       return;
     }
     this.task = storageRef.put(file, metadataObject);
-
     this.task.on('state_changed', (snapshot) => {
       // Observe state change events such as progress, pause, and resume
       const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
@@ -275,10 +294,9 @@ class SkeletonUploader extends PolymerElement {
           break;
       }
     }, (error) => {
-      error.code === 'storage/canceled'
-        ? this.buttonState = 'default'
-        : this.buttonState = 'failed';
-
+      error.code === 'storage/canceled' ?
+        this.buttonState = 'default' :
+        this.buttonState = 'failed';
       // Handle unsuccessful uploads
       this._dispatchEvent('error', error);
     }, () => {
