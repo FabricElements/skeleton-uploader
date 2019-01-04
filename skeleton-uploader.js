@@ -5,6 +5,8 @@ import '@polymer/paper-button/paper-button.js';
 import '@polymer/paper-icon-button/paper-icon-button.js';
 import '@polymer/iron-icons/iron-icons.js';
 
+const firebase = window.firebase;
+
 /**
  * `skeleton-uploader`
  *
@@ -282,12 +284,16 @@ class SkeletonUploader extends PolymerElement {
     this.titlePreview = fileName;
     let fileExt = /\.[\w]+/.exec(file.name);
     const storageRef = firebase.storage().ref(this.path + fileExt);
+    let baseMetadata = this.metadata;
     let metadataObject = null;
-    if (this.metadata && typeof this.metadata === 'object') {
+    if (baseMetadata && typeof baseMetadata === 'object') {
       metadataObject = {
         customMetadata: this.metadata,
       };
-    } else if (this.metadata && typeof this.metadata !== 'object') {
+      if (!metadataObject.customMetadata.hasOwnProperty('name')) {
+        metadataObject.customMetadata.name = fileName;
+      }
+    } else if (baseMetadata && typeof baseMetadata !== 'object') {
       this.buttonState = 'failed';
       this._dispatchEvent('error', 'Metadata should be an object');
       return;
