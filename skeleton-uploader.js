@@ -28,12 +28,6 @@ class SkeletonUploader extends PolymerElement {
           position: relative;
         }
 
-        #drop-area {
-          border-radius: 5px;
-          text-align: center;
-          cursor: pointer;
-        }
-
         #progress-bar {
           background-color: var(--paper-green-500);
           bottom: 0;
@@ -58,6 +52,7 @@ class SkeletonUploader extends PolymerElement {
         paper-button {
           color: white;
           transition: transform 500ms linear;
+          position: relative;
         }
 
         .uploaderButton:active {
@@ -106,11 +101,9 @@ class SkeletonUploader extends PolymerElement {
         disabled$="[[disabled]]"
         on-tap="_tapButton"
       >
-        <div id="drop-area">
-          <div id="progress-bar" class$="uploaded-[[uploaded]]" style$="width:[[uploadProgress]]%;"></div>
-          <iron-icon icon="[[buttonIcon]]"></iron-icon>
-          [[buttonText]]
-        </div>
+        <div id="progress-bar" class$="uploaded-[[uploaded]]" style$="width:[[uploadProgress]]%;"></div>
+        <iron-icon icon="[[buttonIcon]]"></iron-icon>
+        [[buttonText]]
       </paper-button>
       <paper-icon-button
         icon="cancel"
@@ -207,25 +200,6 @@ class SkeletonUploader extends PolymerElement {
    */
   connectedCallback() {
     super.connectedCallback();
-    const dropzone = this.shadowRoot.querySelector('#drop-area');
-
-    dropzone.ondrop = (e) => {
-      e.preventDefault();
-      dropzone.classList.remove('dragover');
-      if (!this.uploadProgress) {
-        this._upload(e, e.dataTransfer.files[0]);
-      }
-    };
-
-    dropzone.ondragover = function() {
-      dropzone.classList.add('dragover');
-      return false;
-    };
-
-    dropzone.ondragleave = function() {
-      dropzone.classList.remove('dragover');
-      return false;
-    };
   }
 
   /**
