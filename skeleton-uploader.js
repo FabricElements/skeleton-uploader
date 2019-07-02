@@ -23,9 +23,10 @@ class SkeletonUploader extends PolymerElement {
     return html`
       <style>
         :host {
-          display: block;
+          display: inline-block;
           width: auto;
           position: relative;
+          min-height: 44px;
         }
 
         #progress-bar {
@@ -33,11 +34,13 @@ class SkeletonUploader extends PolymerElement {
           bottom: 0;
           left: 0;
           opacity: 1;
+          top: 0;
           pointer-events: none;
           position: absolute;
-          top: 0;
           transition: all 500ms linear;
           z-index: 10;
+          width: 0;
+          display: block;
         }
 
         #progress-bar.uploaded-true {
@@ -53,6 +56,7 @@ class SkeletonUploader extends PolymerElement {
           color: white;
           transition: transform 500ms linear;
           position: relative;
+          display: block;
         }
 
         .uploaderButton:active {
@@ -86,16 +90,14 @@ class SkeletonUploader extends PolymerElement {
         paper-button[disabled] {
           background-color: var(--paper-grey-400);
         }
+        
+        #media-capture {
+          display: none !important;
+          height: 0;
+          width: 0;
+          position: absolute;
+        }
       </style>
-      <input
-        id="media-capture"
-        type="file"
-        accept="[[accept]]"
-        on-change="_upload"
-        hidden
-        size="5242880"
-        disabled$="[[isUploadDisabled]]"
-      />
       <paper-button
         class$="[[buttonState]] uploaderButton"
         disabled$="[[disabled]]"
@@ -110,6 +112,14 @@ class SkeletonUploader extends PolymerElement {
         hidden$="[[!showCancel]]"
         on-tap="_resetButton"
       ></paper-icon-button>
+      <input id="media-capture"
+        type="file"
+        accept="[[accept]]"
+        on-change="_upload"
+        hidden
+        size="5242880"
+        disabled$="[[isUploadDisabled]]"
+      />
     `;
   }
 
@@ -242,7 +252,7 @@ class SkeletonUploader extends PolymerElement {
       this._dispatchEvent('error', 'File size is bigger than specified');
       return;
     }
-    if (this.minSize != 0 && fileSize < this.minSize) {
+    if (this.minSize !== 0 && fileSize < this.minSize) {
       this.buttonState = 'failed';
       this._dispatchEvent('error', 'File size is smaller than specified');
       return;
@@ -302,13 +312,11 @@ class SkeletonUploader extends PolymerElement {
 
   /**
    * Remove file from storage
-   *
-   * @return {*}
    */
   removeFile() {
     const pathRef = firebase.storage().ref().child(this.path + this.extension);
     // Get the download URL
-    return pathRef.delete().then(() => (this.src = null)).catch((error) => (this.error = error));
+    pathRef.delete().then(() => (this.src = null)).catch((error) => (this.error = error));
   }
 
   /**
@@ -377,7 +385,9 @@ class SkeletonUploader extends PolymerElement {
   _resetButton() {
     this.uploadProgress = 0;
     this.buttonState = 'default';
-    if (this.task) this.task.cancel();
+    if (this.task) {
+      this.task.cancel();
+    }
   }
 }
 
