@@ -52,7 +52,7 @@ class SkeletonUploader extends PolymerElement {
         }
 
         [hidden] {
-          display: none;
+          display: none !important;
         }
 
         paper-button {
@@ -102,17 +102,12 @@ class SkeletonUploader extends PolymerElement {
         disabled$="[[isUploadDisabled]]"
       />
       <paper-button
-        class$="[[buttonState]]
-                    uploaderButton"
+        class$="[[buttonState]] uploaderButton"
         disabled$="[[disabled]]"
         on-tap="_tapButton"
       >
         <div id="drop-area">
-          <div
-            id="progress-bar"
-            class$="uploaded-[[uploaded]]"
-            style$="width:[[uploadProgress]]%;"
-          ></div>
+          <div id="progress-bar" class$="uploaded-[[uploaded]]" style$="width:[[uploadProgress]]%;"></div>
           <iron-icon icon="[[buttonIcon]]"></iron-icon>
           [[buttonText]]
         </div>
@@ -267,8 +262,7 @@ class SkeletonUploader extends PolymerElement {
     const file = fileObject
       ? fileObject
       : this.shadowRoot.querySelector('#media-capture').files[0];
-    const fileSize = this.shadowRoot.querySelector('#media-capture').files[0]
-      .size;
+    const fileSize = this.shadowRoot.querySelector('#media-capture').files[0].size;
     if (this.maxSize !== 0 && fileSize > this.maxSize) {
       this.buttonState = 'failed';
       this._dispatchEvent('error', 'File size is bigger than specified');
@@ -282,15 +276,15 @@ class SkeletonUploader extends PolymerElement {
     this.downloadURL = null;
     const fileName = file.name;
     this.titlePreview = fileName;
-    let fileExt = /\.[\w]+/.exec(file.name);
+    const fileExt = /\.[\w]+/.exec(file.name);
     const storageRef = firebase.storage().ref(this.path + fileExt);
-    let baseMetadata = this.metadata;
+    const baseMetadata = this.metadata;
     let metadataObject = null;
     if (baseMetadata && typeof baseMetadata === 'object') {
       metadataObject = {
         customMetadata: this.metadata,
       };
-      if (!metadataObject.customMetadata.hasOwnProperty('name')) {
+      if (!metadataObject.customMetadata.name) {
         metadataObject.customMetadata.name = fileName;
       }
     } else if (baseMetadata && typeof baseMetadata !== 'object') {
@@ -299,43 +293,37 @@ class SkeletonUploader extends PolymerElement {
       return;
     }
     this.task = storageRef.put(file, metadataObject);
-    this.task.on(
-      'state_changed',
-      (snapshot) => {
-        // Observe state change events such as progress, pause, and resume
-        this.uploadProgress =
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        this.buttonState = 'uploading';
-        switch (snapshot.state) {
-          case firebase.storage.TaskState.PAUSED: // or 'paused'
-            this._dispatchEvent('paused', 'Upload is paused');
-            break;
-          case firebase.storage.TaskState.RUNNING: // or 'running'
-            this._dispatchEvent('running', 'Upload is running');
-            break;
-        }
-      },
-      (error) => {
-        error.code === 'storage/canceled'
-          ? (this.buttonState = 'default')
-          : (this.buttonState = 'failed');
-        // Handle unsuccessful uploads
-        this._dispatchEvent('error', error);
-      },
-      () => {
-        this.task.snapshot.ref.getDownloadURL().then((downloadURL) => {
-          // Handle successful uploads on complete
-          this.downloadURL = downloadURL;
-          this.extension = fileExt[0];
-          this._dispatchEvent('completed', {
-            type: file.type,
-            url: this.downloadURL,
-            name: fileName,
-          });
-          this.buttonState = 'done';
-        });
+    this.task.on('state_changed', (snapshot) => {
+      // Observe state change events such as progress, pause, and resume
+      this.uploadProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+      this.buttonState = 'uploading';
+      switch (snapshot.state) {
+        case firebase.storage.TaskState.PAUSED: // or 'paused'
+          this._dispatchEvent('paused', 'Upload is paused');
+          break;
+        case firebase.storage.TaskState.RUNNING: // or 'running'
+          this._dispatchEvent('running', 'Upload is running');
+          break;
       }
-    );
+    }, (error) => {
+      error.code === 'storage/canceled'
+        ? (this.buttonState = 'default')
+        : (this.buttonState = 'failed');
+      // Handle unsuccessful uploads
+      this._dispatchEvent('error', error);
+    }, () => {
+      this.task.snapshot.ref.getDownloadURL().then((downloadURL) => {
+        // Handle successful uploads on complete
+        this.downloadURL = downloadURL;
+        this.extension = fileExt[0];
+        this._dispatchEvent('completed', {
+          type: file.type,
+          url: this.downloadURL,
+          name: fileName,
+        });
+        this.buttonState = 'done';
+      });
+    });
   }
 
   /**
@@ -344,15 +332,9 @@ class SkeletonUploader extends PolymerElement {
    * @return {*}
    */
   removeFile() {
-    const pathRef = firebase
-      .storage()
-      .ref()
-      .child(this.path + this.extension);
+    const pathRef = firebase.storage().ref().child(this.path + this.extension);
     // Get the download URL
-    return pathRef
-      .delete()
-      .then(() => (this.src = null))
-      .catch((error) => (this.error = error));
+    return pathRef.delete().then(() => (this.src = null)).catch((error) => (this.error = error));
   }
 
   /**
@@ -363,13 +345,7 @@ class SkeletonUploader extends PolymerElement {
    * @private
    */
   _dispatchEvent(event, detail) {
-    this.dispatchEvent(
-      new CustomEvent(event, {
-        detail: detail,
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this.dispatchEvent(new CustomEvent(event, {detail: detail, bubbles: true, composed: true}));
   }
 
   /**

@@ -3,12 +3,12 @@
   "version": "3.0.0",
   "license": "BSD-3-Clause",
   "devDependencies": {
-    "@fabricelements/firebase-config": "0.0.1",
-    "@polymer/iron-demo-helpers": "^3.0.2",
-    "@webcomponents/webcomponentsjs": "^2.0.0",
-    "eslint": "^4.12.1",
-    "eslint-config-google": "^0.9.1",
-    "eslint-plugin-html": "^3.2.2",
+    "@fabricelements/firebase-config": "github:FabricElements/firebase-config",
+    "@polymer/iron-demo-helpers": "^3.1.0",
+    "@webcomponents/webcomponentsjs": "^2.2.10",
+    "eslint": "^6.0.1",
+    "eslint-config-google": "^0.13.0",
+    "eslint-plugin-html": "^6.0.0",
     "wct-browser-legacy": "^1.0.2"
   },
   "scripts": {
@@ -22,8 +22,8 @@
     "@fabricelements/skeleton-auth": "github:FabricElements/skeleton-auth",
     "@polymer/paper-button": "^3.0.1",
     "@polymer/paper-fab": "^3.0.1",
-    "@polymer/paper-icon-button": "^3.0.1",
-    "@polymer/polymer": "^3.1.0"
+    "@polymer/paper-icon-button": "^3.0.2",
+    "@polymer/polymer": "^3.3.0"
   },
   "resolutions": {
     "inherits": "2.0.3",
