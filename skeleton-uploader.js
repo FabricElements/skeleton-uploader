@@ -27,6 +27,7 @@ class SkeletonUploader extends PolymerElement {
           width: auto;
           position: relative;
           min-height: 44px;
+          vertical-align: middle;
         }
 
         #progress-bar {
@@ -92,34 +93,37 @@ class SkeletonUploader extends PolymerElement {
         }
         
         #media-capture {
-          display: none !important;
-          height: 0;
-          width: 0;
+          display: block;
+          height: 100%;
+          width: 100%;
+          top: 0;
+          left: 0;
           position: absolute;
+          z-index: 3;
+          opacity: 0;
+          cursor: pointer;
         }
       </style>
       <paper-button
         class$="[[buttonState]] uploaderButton"
         disabled$="[[disabled]]"
-        on-tap="_tapButton"
       >
         <div id="progress-bar" class$="uploaded-[[uploaded]]" style$="width:[[uploadProgress]]%;"></div>
         <iron-icon icon="[[buttonIcon]]"></iron-icon>
         [[buttonText]]
+        <input id="media-capture"
+          type="file"
+          accept="[[accept]]"
+          on-change="_upload"
+          size="5242880"
+          disabled$="[[isUploadDisabled]]"
+        />
       </paper-button>
       <paper-icon-button
         icon="cancel"
         hidden$="[[!showCancel]]"
         on-tap="_resetButton"
       ></paper-icon-button>
-      <input id="media-capture"
-        type="file"
-        accept="[[accept]]"
-        on-change="_upload"
-        hidden
-        size="5242880"
-        disabled$="[[isUploadDisabled]]"
-      />
     `;
   }
 
@@ -316,7 +320,11 @@ class SkeletonUploader extends PolymerElement {
   removeFile() {
     const pathRef = firebase.storage().ref().child(this.path + this.extension);
     // Get the download URL
-    pathRef.delete().then(() => (this.src = null)).catch((error) => (this.error = error));
+    pathRef.delete().then(() => {
+      this.src = null;
+    }).catch((error) => {
+      this.error = error;
+    });
   }
 
   /**
